@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Регистрация - Отель</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .error-list {
+            font-size: 0.875rem;
+            margin-top: 0.25rem;
+        }
+        .field-error {
+            border-color: #dc3545 !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-4">
+        <div class="row justify-content-center">
+            <div class="col-md-10">
+                <div class="card">
+                    <div class="card-header">
+                        <h4 class="text-center">Регистрация в системе</h4>
+                    </div>
+                    <div class="card-body">
+                        {% if messages %}
+                            {% for message in messages %}
+                                <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} alert-dismissible fade show">
+                                    {{ message|linebreaks }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+
+                        <form method="post" novalidate>
+                            {% csrf_token %}
+
+                            <h5 class="mb-3 border-bottom pb-2">Данные для входа</h5>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="id_username" class="form-label">Логин*:</label>
+                                        {{ user_form.username }}
+                                        {% if user_form.username.errors %}
+                                            <div class="error-list text-danger">
+                                                {% for error in user_form.username.errors %}
+                                                    <div>{{ error }}</div>
+                                                {% endfor %}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="id_email" class="form-label">Email*:</label>
+                                        {{ user_form.email }}
+                                        {% if user_form.email.errors %}
+                                            <div class="error-list text-danger">
+                                                {% for error in user_form.email.errors %}
+                                                    <div>{{ error }}</div>
+                                                {% endfor %}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="id_password1" class="form-label">Пароль*:</label>
+                                        {{ user_form.password1 }}
+                                        {% if user_form.password1.errors %}
+                                            <div class="error-list text-danger">
+                                                {% for error in user_form.password1.errors %}
+                                                    <div>{{ error }}</div>
+                                                {% endfor %}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="id_password2" class="form-label">Подтверждение пароля*:</label>
+                                        {{ user_form.password2 }}
+                                        {% if user_form.password2.errors %}
+                                            <div class="error-list text-danger">
+                                                {% for error in user_form.password2.errors %}
+                                                    <div>{{ error }}</div>
+                                                {% endfor %}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <h5 class="mb-3 mt-4 border-bottom pb-2">Личная информация</h5>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="id_fullname" class="form-label">Полное имя*:</label>
+                                        {{ guest_form.fullname }}
+                                        {% if guest_form.fullname.errors %}
+                                            <div class="error-list text-danger">
+                                                {% for error in guest_form.fullname.errors %}
+                                                    <div>{{ error }}</div>
+                                                {% endfor %}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="id_phonenumber" class="form-label">Номер телефона*:</label>
+                                        {{ guest_form.phonenumber }}
+                                        {% if guest_form.phonenumber.errors %}
+                                            <div class="error-list text-danger">
+                                                {% for error in guest_form.phonenumber.errors %}
+                                                    <div>{{ error }}</div>
+                                                {% endfor %}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="id_date_of_birth" class="form-label">Дата рождения пользователя:</label>
+                                        {{ user_form.date_of_birth }}
+                                        {% if user_form.date_of_birth.errors %}
+                                            <div class="error-list text-danger">
+                                                {% for error in user_form.date_of_birth.errors %}
+                                                    <div>{{ error }}</div>
+                                                {% endfor %}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="id_phone_number" class="form-label">Доп. телефон пользователя:</label>
+                                        {{ user_form.phone_number }}
+                                        {% if user_form.phone_number.errors %}
+                                            <div class="error-list text-danger">
+                                                {% for error in user_form.phone_number.errors %}
+                                                    <div>{{ error }}</div>
+                                                {% endfor %}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <h5 class="mb-3 mt-4 border-bottom pb-2">Данные документа</h5>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="id_series" class="form-label">Серия документа*:</label>
+                                        {{ document_form.series }}
+                                        {% if document_form.series.errors %}
+                                            <div class="error-list text-danger">
+                                                {% for error in document_form.series.errors %}
+                                                    <div>{{ error }}</div>
+                                                {% endfor %}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="id_number" class="form-label">Номер документа*:</label>
+                                        {{ document_form.number }}
+                                        {% if document_form.number.errors %}
+                                            <div class="error-list text-danger">
+                                                {% for error in document_form.number.errors %}
+                                                    <div>{{ error }}</div>
+                                                {% endfor %}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="id_dateofissue" class="form-label">Дата выдачи*:</label>
+                                        {{ document_form.dateofissue }}
+                                        {% if document_form.dateofissue.errors %}
+                                            <div class="error-list text-danger">
+                                                {% for error in document_form.dateofissue.errors %}
+                                                    <div>{{ error }}</div>
+                                                {% endfor %}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="id_whoissued" class="form-label">Кем выдан*:</label>
+                                        {{ document_form.whoissued }}
+                                        {% if document_form.whoissued.errors %}
+                                            <div class="error-list text-danger">
+                                                {% for error in document_form.whoissued.errors %}
+                                                    <div>{{ error }}</div>
+                                                {% endfor %}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {% if document_form.non_field_errors %}
+                                <div class="alert alert-danger">
+                                    {% for error in document_form.non_field_errors %}
+                                        <div>{{ error }}</div>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+
+                            <div class="mb-3">
+                                <small class="text-muted">* - обязательные поля</small>
+                            </div>
+
+                            <button type="submit" class="btn btn-success w-100 btn-lg">Зарегистрироваться</button>
+                        </form>
+
+                        <div class="mt-3 text-center">
+                            <p>Уже есть аккаунт? <a href="{% url 'login' %}">Войти</a></p>
+                            <p>Или <a href="{% url 'services_list' %}">продолжить как гость</a></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const errorFields = document.querySelectorAll('.error-list');
+            errorFields.forEach(function(errorField) {
+                const input = errorField.previousElementSibling;
+                if (input && input.classList.contains('form-control')) {
+                    input.classList.add('field-error');
+                }
+            });
+        });
+    </script>
+</body>
+</html>
