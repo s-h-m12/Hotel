@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Номера - Панель менеджера</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="{% url 'manager_dashboard' %}">
+                <i class="fas fa-hotel me-2"></i>Отель - Номера
+            </a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="{% url 'manager_dashboard' %}">
+                    <i class="fas fa-home me-1"></i>Главная
+                </a>
+                <span class="navbar-text me-3">
+                    <i class="fas fa-user me-1"></i>{{ request.user.username }}
+                </span>
+                <a class="nav-link" href="{% url 'logout' %}">
+                    <i class="fas fa-sign-out-alt me-1"></i>Выйти
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid mt-4">
+        <div class="row">
+            <!-- Боковая навигация -->
+            <div class="col-md-3">
+                <div class="card">
+                    <div class="card-header">
+                        <h6 class="card-title mb-0">
+                            <i class="fas fa-bars me-2"></i>Навигация
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-grid gap-2">
+                            <a href="{% url 'manager_dashboard' %}" class="btn btn-outline-secondary btn-sm text-start">
+                                <i class="fas fa-home me-2"></i>Главная
+                            </a>
+                            <a href="{% url 'manager_guests' %}" class="btn btn-outline-primary btn-sm text-start">
+                                <i class="fas fa-users me-2"></i>Гости
+                            </a>
+                            <a href="{% url 'manager_services' %}" class="btn btn-outline-success btn-sm text-start">
+                                <i class="fas fa-concierge-bell me-2"></i>Услуги
+                            </a>
+                            <a href="{% url 'manager_rooms' %}" class="btn btn-warning btn-sm text-start">
+                                <i class="fas fa-bed me-2"></i>Номера
+                            </a>
+                            <a href="{% url 'manager_assignment' %}" class="btn btn-outline-danger btn-sm text-start">
+                                <i class="fas fa-calendar-plus me-2"></i>Назначить услугу
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Основной контент -->
+            <div class="col-md-9">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-bed me-2"></i>Номерной фонд ({{ rooms.count }})
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <!-- Фильтры -->
+                        <form method="GET" class="mb-4">
+                            <div class="row g-3">
+                                <div class="col-md-4">
+                                    <label class="form-label">Количество спальных мест:</label>
+                                    <select name="bed_count" class="form-select">
+                                        <option value="">Все</option>
+                                        {% for count in bed_counts %}
+                                            <option value="{{ count }}" {% if count|stringformat:"s" == selected_bed_count %}selected{% endif %}>
+                                                {{ count }}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Категория:</label>
+                                    <select name="category" class="form-select">
+                                        <option value="">Все категории</option>
+                                        {% for category in categories %}
+                                            <option value="{{ category.id }}" {% if category.id|stringformat:"s" == selected_category %}selected{% endif %}>
+                                                {{ category.name }}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-md-4 d-flex align-items-end">
+                                    <button type="submit" class="btn btn-primary me-2">
+                                        <i class="fas fa-filter"></i> Применить
+                                    </button>
+                                    <a href="{% url 'manager_rooms' %}" class="btn btn-outline-secondary">
+                                        <i class="fas fa-times"></i> Сбросить
+                                    </a>
+                                </div>
+                            </div>
+                        </form>
+
+                        <!-- Таблица номеров -->
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Этаж</th>
+                                        <th>Комнат</th>
+                                        <th>Кроватей</th>
+                                        <th>Категория</th>
+                                        <th>Цена</th>
+                                        <th>Статус</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for room in rooms %}
+                                    <tr>
+                                        <td><strong>#{{ room.id }}</strong></td>
+                                        <td>{{ room.floor }} этаж</td>
+                                        <td>{{ room.roomcount }}</td>
+                                        <td>{{ room.bedcount }}</td>
+                                        <td>{{ room.categoryid.name }}</td>
+                                        <td>{{ room.categoryid.price }} руб.</td>
+                                        <td>
+                                            {% if room.is_available %}
+                                                <span class="badge bg-success">Свободен</span>
+                                            {% else %}
+                                                <span class="badge bg-danger">Занят</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="7" class="text-center text-muted">
+                                            <i class="fas fa-info-circle me-2"></i>Номера не найдены
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

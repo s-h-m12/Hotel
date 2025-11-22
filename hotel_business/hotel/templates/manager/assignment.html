@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Назначение услуг - Панель менеджера</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .assignment-card {
+            border-left: 4px solid #dc3545;
+        }
+        .form-section {
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="{% url 'manager_dashboard' %}">
+                <i class="fas fa-hotel me-2"></i>Отель - Назначение услуг
+            </a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="{% url 'manager_dashboard' %}">
+                    <i class="fas fa-home me-1"></i>Главная
+                </a>
+                <span class="navbar-text me-3">
+                    <i class="fas fa-user me-1"></i>{{ request.user.username }}
+                </span>
+                <a class="nav-link" href="{% url 'logout' %}">
+                    <i class="fas fa-sign-out-alt me-1"></i>Выйти
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid mt-4">
+        <div class="row">
+            <!-- Боковая навигация -->
+            <div class="col-md-3">
+                <div class="card">
+                    <div class="card-header">
+                        <h6 class="card-title mb-0">
+                            <i class="fas fa-bars me-2"></i>Навигация
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-grid gap-2">
+                            <a href="{% url 'manager_dashboard' %}" class="btn btn-outline-secondary btn-sm text-start">
+                                <i class="fas fa-home me-2"></i>Главная
+                            </a>
+                            <a href="{% url 'manager_guests' %}" class="btn btn-outline-primary btn-sm text-start">
+                                <i class="fas fa-users me-2"></i>Гости
+                            </a>
+                            <a href="{% url 'manager_services' %}" class="btn btn-outline-success btn-sm text-start">
+                                <i class="fas fa-concierge-bell me-2"></i>Услуги
+                            </a>
+                            <a href="{% url 'manager_rooms' %}" class="btn btn-outline-warning btn-sm text-start">
+                                <i class="fas fa-bed me-2"></i>Номера
+                            </a>
+                            <a href="{% url 'manager_assignment' %}" class="btn btn-danger btn-sm text-start">
+                                <i class="fas fa-calendar-plus me-2"></i>Назначить услугу
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Информация -->
+                <div class="card mt-4">
+                    <div class="card-header">
+                        <h6 class="card-title mb-0">
+                            <i class="fas fa-info-circle me-2"></i>Информация
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <small class="text-muted">
+                            На этой странице вы можете назначить дополнительные услуги гостям отеля.
+                            Выберите гостя и услугу для оказания.
+                        </small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Основной контент -->
+            <div class="col-md-9">
+                <div class="card assignment-card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-calendar-plus me-2"></i>Назначение услуги гостю
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        {% if messages %}
+                            {% for message in messages %}
+                                <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} alert-dismissible fade show">
+                                    <i class="fas fa-{% if message.tags == 'error' %}exclamation-triangle{% else %}check-circle{% endif %} me-2"></i>
+                                    {{ message }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+
+                        <div class="form-section">
+                            <form method="post" action="{% url 'manager_assignment' %}">
+                                {% csrf_token %}
+
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label">Гость:</label>
+                                        <select name="guest" class="form-select" required>
+                                            <option value="">Выберите гостя...</option>
+                                            {% for guest in guests %}
+                                                <option value="{{ guest.id }}">
+                                                    {{ guest.fullname }} (тел: {{ guest.phonenumber }})
+                                                </option>
+                                            {% endfor %}
+                                        </select>
+                                        <div class="form-text">Выберите гостя из списка</div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Бронирование:</label>
+                                        <select name="reservation" class="form-select" required>
+                                            <option value="">Выберите бронирование...</option>
+                                            {% for reservation in reservations %}
+                                                <option value="{{ reservation.id }}">
+                                                    Бронь #{{ reservation.id }} - Номер {{ reservation.numberid.id }}
+                                                    ({{ reservation.arrivaldate }} - {{ reservation.departuredate }})
+                                                </option>
+                                            {% endfor %}
+                                        </select>
+                                        <div class="form-text">Выберите активное бронирование</div>
+                                    </div>
+                                </div>
+
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label">Услуга:</label>
+                                        <select name="service" class="form-select" required>
+                                            <option value="">Выберите услугу...</option>
+                                            {% for service in services %}
+                                                <option value="{{ service.id }}" data-price="{{ service.price }}">
+                                                    {{ service.name }} - {{ service.price }} руб.
+                                                </option>
+                                            {% endfor %}
+                                        </select>
+                                        <div class="form-text">Выберите услугу из списка доступных</div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label">Количество:</label>
+                                        <input type="number" name="quantity" class="form-control" value="1" min="1" max="10" required>
+                                        <div class="form-text">Количество услуг</div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label">Дата оказания:</label>
+                                        <input type="date" name="date_of_service" class="form-control"
+                                               value="{{ today }}" min="{{ today }}" required>
+                                        <div class="form-text">Дата оказания услуги</div>
+                                    </div>
+                                </div>
+
+                                <div class="mt-4">
+                                    <button type="submit" class="btn btn-success btn-lg">
+                                        <i class="fas fa-check me-2"></i>Назначить услугу
+                                    </button>
+                                    <button type="reset" class="btn btn-outline-secondary">
+                                        <i class="fas fa-broom me-2"></i>Очистить форму
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+
+                        <!-- Информация о последних назначениях -->
+                        <div class="mt-4">
+                            <h6 class="section-title">
+                                <i class="fas fa-history me-2"></i>Последние назначения
+                            </h6>
+
+                            {% if recent_assignments %}
+                            <div class="table-responsive">
+                                <table class="table table-sm table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>Дата</th>
+                                            <th>Гость</th>
+                                            <th>Услуга</th>
+                                            <th>Кол-во</th>
+                                            <th>Бронь</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for assignment in recent_assignments %}
+                                        <tr>
+                                            <td>{{ assignment.dateofserviceprovision }}</td>
+                                            <td>{{ assignment.reservationid.clientid.fullname }}</td>
+                                            <td>{{ assignment.serviceid.name }}</td>
+                                            <td>{{ assignment.quantity }}</td>
+                                            <td>#{{ assignment.reservationid.id }}</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            {% else %}
+                            <div class="text-center py-3">
+                                <i class="fas fa-info-circle text-muted me-2"></i>
+                                <span class="text-muted">Нет назначений услуг</span>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

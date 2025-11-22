@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect
 from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib import messages
-from .models import Service, CustomUser, Guest, Document
+from .models import Service, CustomUser, Guest, Document, ServiceProvision
 from .forms import LoginForm, UserRegistrationForm, GuestRegistrationForm, DocumentForm
 import logging
 
@@ -42,7 +42,8 @@ def register_view(request):
         else:
             logger.debug(f"Document form errors: {document_form.errors}")
 
-        if user_form.is_valid() and guest_form.is_valid() and document_form.is_valid():
+
+        if user_form.is_valid() and document_form.is_valid():
             try:
                 # Сохраняем документ
                 document = document_form.save()
@@ -54,13 +55,26 @@ def register_view(request):
                 user.save()
                 logger.debug(f"User saved: {user.username}")
 
-                # Сохраняем гостя
-                guest = guest_form.save(commit=False)
-                guest.user = user
-                guest.documentid = document
-                guest.discount = 0.00  # Начальная скидка 0%
+
+                guest_data = {
+                    'user': user,
+                    'documentid': document,
+                    'fullname': request.POST.get('fullname', ''),
+                    'phonenumber': request.POST.get('phonenumber', ''),
+                    'discount': 0.00,  # Начальная скидка 0%
+                }
+
+                # Берем дату рождения из пользовательской формы
+                if user_form.cleaned_data.get('date_of_birth'):
+                    guest_data['dateofbirth'] = user_form.cleaned_data['date_of_birth']
+                else:
+                    # Или из POST данных напрямую
+                    guest_data['dateofbirth'] = request.POST.get('date_of_birth')
+
+                # Создаем гостя
+                guest = Guest(**guest_data)
                 guest.save()
-                logger.debug(f"Guest saved: {guest.fullname}")
+                logger.debug(f"Guest saved: {guest.fullname}, dateofbirth: {guest.dateofbirth}")
 
                 # Автоматически авторизуем пользователя
                 login(request, user)
@@ -181,11 +195,139 @@ def admin_dashboard(request):
     return render(request, 'dashboard/admin.html')
 
 
-@manager_required
+# views.py
+from django.shortcuts import render
+from django.db.models import Q
+from django.utils import timezone
+from .models import Guest, Service, Number, Category, Reservation
+
+
 def manager_dashboard(request):
-    return render(request, 'dashboard/manager.html')
+    """Главная страница панели менеджера"""
+    context = {
+        'guests_count': Guest.objects.count(),
+        'services_count': Service.objects.filter(is_active=True).count(),
+        'rooms_count': Number.objects.count(),
+        'available_rooms_count': Number.objects.filter(is_available=True).count(),
+    }
+    return render(request, 'manager/manager_dashboard.html', context)
+
+
+def manager_guests(request):
+    """Страница гостей с поиском"""
+    guests = Guest.objects.all()
+
+    # Поиск гостей
+    query = request.GET.get('q', '')
+    if query:
+        guests = guests.filter(
+            Q(fullname__icontains=query) |
+            Q(phonenumber__icontains=query) |
+            Q(user__email__icontains=query)
+        )
+
+    context = {
+        'guests': guests,
+    }
+    return render(request, 'manager/guests.html', context)
+
+
+def manager_services(request):
+    """Страница услуг"""
+    services = Service.objects.filter(is_active=True)
+    all_services_count = Service.objects.count()
+
+    # Поиск услуг
+    query = request.GET.get('q', '')
+    if query:
+        services = services.filter(
+            Q(name__icontains=query) |
+            Q(description__icontains=query)
+        )
+
+    context = {
+        'services': services,
+        'all_services_count': all_services_count,
+    }
+    return render(request, 'manager/services.html', context)
+
+
+def manager_rooms(request):
+    """Страница номеров с фильтрацией"""
+    rooms = Number.objects.all()
+    categories = Category.objects.all()
+
+    # Фильтрация номеров
+    bed_count = request.GET.get('bed_count')
+    category_id = request.GET.get('category')
+
+    if bed_count:
+        rooms = rooms.filter(bedcount=bed_count)
+    if category_id:
+        rooms = rooms.filter(categoryid_id=category_id)
+
+    # Уникальные значения количества кроватей для фильтра
+    bed_counts = Number.objects.values_list('bedcount', flat=True).distinct().order_by('bedcount')
+
+    context = {
+        'rooms': rooms,
+        'categories': categories,
+        'bed_counts': bed_counts,
+        'selected_bed_count': bed_count,
+        'selected_category': category_id,
+    }
+    return render(request, 'manager/rooms.html', context)
+
+
+def manager_assignment(request):
+    """Страница назначения услуг"""
+    guests = Guest.objects.all()
+    services = Service.objects.filter(is_active=True)
+    reservations = Reservation.objects.filter(status='active')
+
+    # Получаем последние 5 назначений услуг
+    recent_assignments = ServiceProvision.objects.select_related(
+        'reservationid__clientid', 'serviceid'
+    ).order_by('-dateofserviceprovision')[:5]
+
+    if request.method == 'POST':
+        try:
+            # Получаем данные из формы
+            guest_id = request.POST.get('guest')
+            reservation_id = request.POST.get('reservation')
+            service_id = request.POST.get('service')
+            quantity = int(request.POST.get('quantity', 1))
+            date_of_service = request.POST.get('date_of_service')
+
+            # Проверяем существование объектов
+            guest = Guest.objects.get(id=guest_id)
+            reservation = Reservation.objects.get(id=reservation_id)
+            service = Service.objects.get(id=service_id)
+
+            # Создаем запись об оказании услуги
+            ServiceProvision.objects.create(
+                reservationid=reservation,
+                serviceid=service,
+                quantity=quantity,
+                dateofserviceprovision=date_of_service
+            )
+
+            messages.success(request, f'Услуга "{service.name}" успешно назначена гостю {guest.fullname}')
+            return redirect('manager_assignment')
+
+        except Exception as e:
+            messages.error(request, f'Ошибка при назначении услуги: {str(e)}')
+
+    context = {
+        'guests': guests,
+        'services': services,
+        'reservations': reservations,
+        'recent_assignments': recent_assignments,
+        'today': timezone.now().date(),
+    }
+    return render(request, 'manager/assignment.html', context)
 
 
 @client_required
 def client_dashboard(request):
-    return render(request, 'dashboard/client.html')
+    return render(request, 'dashboard/guests.html')
