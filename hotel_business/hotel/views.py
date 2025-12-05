@@ -152,7 +152,7 @@ def logout_view(request):
 
 def services_list(request):
     """Список услуг - доступен всем, включая неавторизованных пользователей"""
-    services = Service.objects.filter(is_active=True)
+    services = Service.objects.all()
     return render(request, 'services/list.html', {
         'services': services,
         'user': request.user
@@ -214,20 +214,37 @@ def manager_dashboard(request):
 
 
 def manager_guests(request):
-    """Страница гостей с поиском"""
-    guests = Guest.objects.all()
+    guests = Guest.objects.select_related('user', 'documentid').all()
 
-    # Поиск гостей
-    query = request.GET.get('q', '')
-    if query:
+    # Поиск
+    search_query = request.GET.get('q', '')
+    if search_query:
         guests = guests.filter(
-            Q(fullname__icontains=query) |
-            Q(phonenumber__icontains=query) |
-            Q(user__email__icontains=query)
+            Q(fullname__icontains=search_query) |
+            Q(phonenumber__icontains=search_query) |
+            Q(user__email__icontains=search_query) |
+            Q(user__username__icontains=search_query) |
+            Q(documentid__series__icontains=search_query) |
+            Q(documentid__number__icontains=search_query)
         )
+
+    # Сортировка
+    sort = request.GET.get('sort', '')
+    if sort == 'name_asc':
+        guests = guests.order_by('fullname')
+    elif sort == 'name_desc':
+        guests = guests.order_by('-fullname')
+    elif sort == 'discount_desc':
+        guests = guests.order_by('-discount')
+    elif sort == 'date_asc':
+        guests = guests.order_by('dateofbirth')
+    else:
+        # Сортировка по умолчанию (по ID)
+        guests = guests.order_by('id')
 
     context = {
         'guests': guests,
+        'sort': sort,
     }
     return render(request, 'manager/guests.html', context)
 
@@ -330,4 +347,8 @@ def manager_assignment(request):
 
 @client_required
 def client_dashboard(request):
-    return render(request, 'dashboard/guests.html')
+    services = Service.objects.all()
+    users = CustomUser.objects.all()
+    guests = Guest.objects.all()
+
+    return render(request, 'client/client_dashboard.html', {'services': services, 'users': users, 'guests': guests})

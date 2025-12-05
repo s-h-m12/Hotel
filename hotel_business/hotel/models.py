@@ -83,6 +83,8 @@ class Guest(models.Model):
         return self.fullname
 
 
+
+
 class Service(models.Model):
     """Модель дополнительной услуги (завтрак, спа и т.д.)"""
     name = models.CharField(max_length=100)
@@ -93,6 +95,8 @@ class Service(models.Model):
     def __str__(self):
         return self.name
 
+    def discount_price(self, x):
+        return self.price * (1 - x.discount)
 
 class Reservation(models.Model):
     """Модель бронирования номера"""

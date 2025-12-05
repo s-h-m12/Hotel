@@ -11,6 +11,14 @@
         .guest-card:hover {
             transform: translateY(-5px);
         }
+        .sort-asc::after {
+            content: " ↑";
+            font-size: 0.8em;
+        }
+        .sort-desc::after {
+            content: " ↓";
+            font-size: 0.8em;
+        }
     </style>
 </head>
 <body>
@@ -69,88 +77,222 @@
             <div class="col-md-9">
                 <div class="card">
                     <div class="card-header">
-                        <h5 class="card-title mb-0">
-                            <i class="fas fa-users me-2"></i>Список гостей ({{ guests.count }})
-                        </h5>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-users me-2"></i>Список гостей ({{ guests.count }})
+                            </h5>
+                            <div>
+                                <!-- Сортировка -->
+                                <div class="btn-group">
+                                    <button type="button" class="btn btn-outline-secondary btn-sm dropdown-toggle" data-bs-toggle="dropdown">
+                                        <i class="fas fa-sort me-1"></i>Сортировка
+                                    </button>
+                                    <ul class="dropdown-menu">
+                                        <li>
+                                            <a class="dropdown-item {% if sort == 'name_asc' %}active{% endif %}"
+                                               href="?sort=name_asc{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}">
+                                                <i class="fas fa-sort-alpha-down me-2"></i>По ФИО (А-Я)
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a class="dropdown-item {% if sort == 'name_desc' %}active{% endif %}"
+                                               href="?sort=name_desc{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}">
+                                                <i class="fas fa-sort-alpha-down-alt me-2"></i>По ФИО (Я-А)
+                                            </a>
+                                        </li>
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li>
+                                            <a class="dropdown-item {% if sort == 'discount_desc' %}active{% endif %}"
+                                               href="?sort=discount_desc{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}">
+                                                <i class="fas fa-percent me-2"></i>По скидке (убыв.)
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a class="dropdown-item {% if sort == 'date_asc' %}active{% endif %}"
+                                               href="?sort=date_asc{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}">
+                                                <i class="fas fa-birthday-cake me-2"></i>По дате рождения
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                     <div class="card-body">
-                        <!-- Форма поиска -->
+                        <!-- Форма поиска и сортировки -->
                         <form method="GET" class="mb-4">
-                            <div class="row">
+                            <div class="row g-2 align-items-end">
+                                <!-- Скрытое поле для сохранения сортировки -->
+                                {% if sort %}
+                                <input type="hidden" name="sort" value="{{ sort }}">
+                                {% endif %}
+
                                 <div class="col-md-8">
-                                    <input type="text" name="q" class="form-control"
-                                           placeholder="Поиск по имени, телефону..."
-                                           value="{{ request.GET.q }}">
+                                    <label class="form-label small">Поиск гостей</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">
+                                            <i class="fas fa-search"></i>
+                                        </span>
+                                        <input type="text" name="q" class="form-control"
+                                               placeholder="Поиск по ФИО, телефону, email..."
+                                               value="{{ request.GET.q }}">
+                                    </div>
                                 </div>
                                 <div class="col-md-4">
-                                    <button type="submit" class="btn btn-primary me-2">
-                                        <i class="fas fa-search"></i> Найти
-                                    </button>
-                                    <a href="{% url 'manager_guests' %}" class="btn btn-outline-secondary">
-                                        <i class="fas fa-times"></i> Сбросить
-                                    </a>
+                                    <div class="d-grid gap-2 d-md-flex">
+                                        <button type="submit" class="btn btn-primary">
+                                            <i class="fas fa-search me-1"></i> Найти
+                                        </button>
+                                        <a href="{% url 'manager_guests' %}" class="btn btn-outline-secondary">
+                                            <i class="fas fa-times me-1"></i> Сбросить
+                                        </a>
+                                    </div>
                                 </div>
                             </div>
                         </form>
+
+                        <!-- Информация о сортировке -->
+                        {% if sort %}
+                        <div class="alert alert-info py-2 px-3 mb-3 d-flex justify-content-between align-items-center">
+                            <div>
+                                <i class="fas fa-sort me-1"></i>
+                                {% if sort == 'name_asc' %}
+                                Сортировка: ФИО (А-Я)
+                                {% elif sort == 'name_desc' %}
+                                Сортировка: ФИО (Я-А)
+                                {% elif sort == 'discount_desc' %}
+                                Сортировка: По скидке (убывающая)
+                                {% elif sort == 'date_asc' %}
+                                Сортировка: По дате рождения
+                                {% endif %}
+                            </div>
+                            <a href="{% url 'manager_guests' %}{% if request.GET.q %}?q={{ request.GET.q }}{% endif %}"
+                               class="btn btn-sm btn-outline-info">
+                                Сбросить сортировку
+                            </a>
+                        </div>
+                        {% endif %}
 
                         {% if guests %}
                         <div class="row">
                             {% for guest in guests %}
                             <div class="col-xl-4 col-lg-6 col-md-6 mb-4">
                                 <div class="card guest-card h-100 shadow-sm">
-                                    <div class="card-header bg-primary text-white">
+                                    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
                                         <h6 class="card-title mb-0">
                                             <i class="fas fa-user me-2"></i>{{ guest.fullname }}
                                         </h6>
+                                        {% if guest.discount > 0 %}
+                                        <span class="badge bg-warning text-dark">
+                                            {{ guest.discount }}%
+                                        </span>
+                                        {% endif %}
                                     </div>
                                     <div class="card-body">
-                                        <div class="mb-2">
-                                            <small class="text-muted">Контактная информация:</small>
-                                            <div>
+                                        <div class="mb-3">
+                                            <small class="text-muted d-block mb-1">
+                                                <i class="fas fa-id-card me-1"></i>Контактная информация:
+                                            </small>
+                                            <div class="mb-1">
                                                 <i class="fas fa-phone text-muted me-2"></i>
                                                 <span>{{ guest.phonenumber }}</span>
                                             </div>
                                             <div>
                                                 <i class="fas fa-envelope text-muted me-2"></i>
-                                                <span>{{ guest.user.email }}</span>
+                                                <span>{{ guest.user.email|default:"Не указан" }}</span>
                                             </div>
                                         </div>
-                                        <div class="mb-2">
-                                            <small class="text-muted">Личная информация:</small>
-                                            <div>
+                                        <div class="mb-3">
+                                            <small class="text-muted d-block mb-1">
+                                                <i class="fas fa-info-circle me-1"></i>Личная информация:
+                                            </small>
+                                            <div class="mb-1">
                                                 <i class="fas fa-birthday-cake text-muted me-2"></i>
                                                 <span>{{ guest.dateofbirth }}</span>
                                             </div>
                                             <div>
                                                 <i class="fas fa-percent text-muted me-2"></i>
-                                                <span>Скидка: {{ guest.discount }}%</span>
+                                                <span>Скидка: {{ guest.discount|default:"0" }}%</span>
                                             </div>
                                         </div>
                                         <div class="mb-2">
-                                            <small class="text-muted">Документ:</small>
-                                            <div class="small">
-                                                {{ guest.documentid.series }} {{ guest.documentid.number }}
+                                            <small class="text-muted d-block mb-1">
+                                                <i class="fas fa-passport me-1"></i>Документ:
+                                            </small>
+                                            <div class="small mb-1">
+                                                <strong>{{ guest.documentid.series }} {{ guest.documentid.number }}</strong>
                                             </div>
                                             <div class="small text-muted">
-                                                Выдан: {{ guest.documentid.whoissued }}
+                                                <i class="fas fa-building me-1"></i>
+                                                {{ guest.documentid.whoissued }}
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="card-footer bg-transparent">
+                                    <div class="card-footer bg-transparent d-flex justify-content-between align-items-center">
                                         <small class="text-muted">
-                                            <i class="fas fa-calendar me-1"></i>
-                                            Дата рождения: {{ guest.dateofbirth }}
+                                            <i class="fas fa-user-tag me-1"></i>
+                                            {{ guest.user.get_role_display|default:"Гость" }}
+                                        </small>
+                                        <small class="text-muted">
+                                            ID: {{ guest.id }}
                                         </small>
                                     </div>
                                 </div>
                             </div>
                             {% endfor %}
                         </div>
+
+                        <!-- Пагинация (опционально) -->
+                        {% if is_paginated %}
+                        <nav aria-label="Page navigation">
+                            <ul class="pagination justify-content-center">
+                                {% if page_obj.has_previous %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if sort %}&sort={{ sort }}{% endif %}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}">
+                                        Назад
+                                    </a>
+                                </li>
+                                {% endif %}
+
+                                {% for num in page_obj.paginator.page_range %}
+                                {% if page_obj.number == num %}
+                                <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                                {% else %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ num }}{% if sort %}&sort={{ sort }}{% endif %}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}">
+                                        {{ num }}
+                                    </a>
+                                </li>
+                                {% endif %}
+                                {% endfor %}
+
+                                {% if page_obj.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if sort %}&sort={{ sort }}{% endif %}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}">
+                                        Вперед
+                                    </a>
+                                </li>
+                                {% endif %}
+                            </ul>
+                        </nav>
+                        {% endif %}
+
                         {% else %}
-                        <div class="text-center py-4">
+                        <div class="text-center py-5">
                             <i class="fas fa-users fa-3x text-muted mb-3"></i>
                             <h5 class="text-muted">Гости не найдены</h5>
-                            <p class="text-muted">{% if request.GET.q %}По вашему запросу ничего не найдено.{% else %}В системе пока нет зарегистрированных гостей.{% endif %}</p>
+                            <p class="text-muted mb-4">
+                                {% if request.GET.q %}
+                                По запросу "{{ request.GET.q }}" ничего не найдено.
+                                {% else %}
+                                В системе пока нет зарегистрированных гостей.
+                                {% endif %}
+                            </p>
+                            {% if request.GET.q or sort %}
+                            <a href="{% url 'manager_guests' %}" class="btn btn-primary">
+                                <i class="fas fa-times me-1"></i> Сбросить фильтры
+                            </a>
+                            {% endif %}
                         </div>
                         {% endif %}
                     </div>
@@ -158,5 +300,7 @@
             </div>
         </div>
     </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

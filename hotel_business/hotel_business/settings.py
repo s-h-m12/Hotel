@@ -51,6 +51,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'hotel.context_processors.guest_profile'
             ],
         },
     },
@@ -65,7 +66,7 @@ WSGI_APPLICATION = 'hotel_business.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'pog2',
+        'NAME': 'pog4',
         'USER': 'postgres',
         'PASSWORD': '',
         'HOST': 'localhost',
